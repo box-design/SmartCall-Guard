@@ -22,34 +22,7 @@ import javax.inject.Singleton
 object UseCaseModule {
 
     @Provides
+    @Singleton
     fun provideContentResolver(@ApplicationContext context: Context): ContentResolver = context.contentResolver
 
-    @Provides
-    @Singleton
-    fun provideEvaluateCallUseCase(
-        ruleRepository: RuleRepository,
-        settingsRepository: SettingsRepository,
-        segmentRepository: SegmentRepository,
-        locationRepository: LocationRepository,
-        blockLogRepository: BlockLogRepository
-    ): EvaluateCallUseCase = EvaluateCallUseCase(
-        ruleRepository,
-        settingsRepository,
-        segmentRepository,
-        locationRepository,
-        blockLogRepository
-    )
-
-    @Provides
-    @Singleton
-    fun provideImportContactsUseCase(
-        contentResolver: ContentResolver,
-        ruleRepository: RuleRepository
-    ): ImportContactsUseCase = ImportContactsUseCase(contentResolver, ruleRepository)
-
-    @Provides
-    @Singleton
-    fun provideImportExportUseCase(
-        ruleRepository: RuleRepository
-    ): ImportExportUseCase = ImportExportUseCase(ruleRepository)
 }
