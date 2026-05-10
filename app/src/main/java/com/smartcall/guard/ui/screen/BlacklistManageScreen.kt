@@ -299,7 +299,7 @@ fun BlacklistRuleItem(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun AddBlacklistRuleDialog(
     onDismiss: () -> Unit,
