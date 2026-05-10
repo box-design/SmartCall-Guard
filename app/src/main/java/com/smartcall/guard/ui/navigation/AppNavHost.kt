@@ -25,10 +25,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.smartcall.guard.ui.screen.BlacklistManageScreen
+import com.smartcall.guard.ui.screen.BlockStatsScreen
 import com.smartcall.guard.ui.screen.HomeScreen
 import com.smartcall.guard.ui.screen.RulesScreen
 import com.smartcall.guard.ui.screen.LogsScreen
 import com.smartcall.guard.ui.screen.SettingsScreen
+import com.smartcall.guard.ui.screen.WhitelistManageScreen
 
 sealed class Screen(val route: String, val title: String, val selectedIcon: ImageVector, val unselectedIcon: ImageVector) {
     object Home : Screen("home", "首页", Icons.Filled.Home, Icons.Outlined.Home)
@@ -79,10 +82,19 @@ fun AppNavHost() {
             startDestination = Screen.Home.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable(Screen.Home.route) { HomeScreen() }
+            composable(Screen.Home.route) { HomeScreen(navController = navController) }
             composable(Screen.Rules.route) { RulesScreen() }
             composable(Screen.Logs.route) { LogsScreen() }
-            composable(Screen.Settings.route) { SettingsScreen() }
+            composable(Screen.Settings.route) { SettingsScreen(navController = navController) }
+            composable("blacklist_manage") {
+                BlacklistManageScreen(onBack = { navController.popBackStack() })
+            }
+            composable("whitelist_manage") {
+                WhitelistManageScreen(onBack = { navController.popBackStack() })
+            }
+            composable("block_stats") {
+                BlockStatsScreen(onBack = { navController.popBackStack() })
+            }
         }
     }
 }

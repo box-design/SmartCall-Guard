@@ -7,7 +7,9 @@ import java.io.FileOutputStream
 
 class SegmentDatabaseHelper {
 
+    @Volatile
     private var db: SQLiteDatabase? = null
+    @Volatile
     private var dbPath: String? = null
 
     companion object {
@@ -27,6 +29,7 @@ class SegmentDatabaseHelper {
         }
     }
 
+    @Synchronized
     private fun openDatabase(): SQLiteDatabase {
         return db ?: SQLiteDatabase.openDatabase(
             dbPath!!,
@@ -89,6 +92,7 @@ class SegmentDatabaseHelper {
         return results
     }
 
+    @Synchronized
     fun close() {
         db?.close()
         db = null

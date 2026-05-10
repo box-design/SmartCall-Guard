@@ -1,9 +1,16 @@
 package com.smartcall.guard.ui.screen
 
+import android.content.Intent
+import android.os.Build
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.smartcall.guard.data.entity.BlockMode
 import com.smartcall.guard.data.repository.BlockLogRepository
+import com.smartcall.guard.data.repository.SettingsRepository
+import com.smartcall.guard.service.GuardForegroundService
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,7 +20,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val blockLogRepository: BlockLogRepository
+    @ApplicationContext private val applicationContext: android.content.Context,
+    private val blockLogRepository: BlockLogRepository,
+    private val settingsRepository: SettingsRepository
 ) : ViewModel() {
 
     private val _todayBlockCount = MutableStateFlow(0)
@@ -22,8 +31,15 @@ class HomeViewModel @Inject constructor(
     private val _isServiceEnabled = MutableStateFlow(true)
     val isServiceEnabled: StateFlow<Boolean> = _isServiceEnabled.asStateFlow()
 
+    private val _blockMode = MutableStateFlow(BlockMode.NORMAL)
+    val blockMode: StateFlow<BlockMode> = _blockMode.asStateFlow()
+
+    private val _nightModeEnabled = MutableStateFlow(false)
+    val nightModeEnabled: StateFlow<Boolean> = _nightModeEnabled.asStateFlow()
+
     init {
         loadTodayBlockCount()
+        loadSettings()
     }
 
     private fun loadTodayBlockCount() {
@@ -41,7 +57,28 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    private fun loadSettings() {
+        viewModelScope.launch {
+            settingsRepository.getSettings().collect { settings ->
+                settings?.let {
+                    _blockMode.value = it.blockMode
+                    _nightModeEnabled.value = it.nightModeEnabled
+                }
+            }
+        }
+    }
+
     fun toggleService(enabled: Boolean) {
         _isServiceEnabled.value = enabled
+        val serviceIntent = Intent(applicationContext, GuardForegroundService::class.java)
+        if (enabled) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                ContextCompat.startForegroundService(applicationContext, serviceIntent)
+            } else {
+                applicationContext.startService(serviceIntent)
+            }
+        } else {
+            applicationContext.stopService(serviceIntent)
+        }
     }
 }

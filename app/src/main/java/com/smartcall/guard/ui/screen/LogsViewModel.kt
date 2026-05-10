@@ -40,7 +40,7 @@ class LogsViewModel @Inject constructor(
         viewModelScope.launch {
             val rule = RuleEntity(
                 type = RuleType.WHITELIST,
-                value = log.phoneNumber,
+                value = log.normalizedNumber,
                 note = "从拦截记录添加"
             )
             ruleRepository.insertRule(rule)

@@ -8,6 +8,7 @@ import com.smartcall.guard.data.repository.SegmentRepository
 import com.smartcall.guard.data.repository.SettingsRepository
 import com.smartcall.guard.domain.usecase.EvaluateCallUseCase
 import com.smartcall.guard.domain.usecase.ImportContactsUseCase
+import com.smartcall.guard.domain.usecase.ImportExportUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -40,4 +41,10 @@ object UseCaseModule {
         contentResolver: ContentResolver,
         ruleRepository: RuleRepository
     ): ImportContactsUseCase = ImportContactsUseCase(contentResolver, ruleRepository)
+
+    @Provides
+    @Singleton
+    fun provideImportExportUseCase(
+        ruleRepository: RuleRepository
+    ): ImportExportUseCase = ImportExportUseCase(ruleRepository)
 }

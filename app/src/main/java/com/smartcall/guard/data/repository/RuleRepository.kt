@@ -30,7 +30,12 @@ class RuleRepository @Inject constructor(
         val exact = appDatabase.ruleDao().getActiveRulesByTypeSync(RuleType.BLACKLIST_EXACT)
         val prefix = appDatabase.ruleDao().getActiveRulesByTypeSync(RuleType.BLACKLIST_PREFIX)
         val regex = appDatabase.ruleDao().getActiveRulesByTypeSync(RuleType.BLACKLIST_REGEX)
-        return exact + prefix + regex
+        val segment = appDatabase.ruleDao().getActiveRulesByTypeSync(RuleType.BLACKLIST_SEGMENT)
+        return exact + prefix + regex + segment
+    }
+
+    fun getActiveSegmentRulesSync(): List<RuleEntity> {
+        return appDatabase.ruleDao().getActiveRulesByTypeSync(RuleType.BLACKLIST_SEGMENT)
     }
 
     suspend fun insertRule(rule: RuleEntity) = ruleDao.insert(rule)

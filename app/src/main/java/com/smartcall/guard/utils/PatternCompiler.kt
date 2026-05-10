@@ -30,8 +30,8 @@ object PatternCompiler {
                 val startTime = System.currentTimeMillis()
                 val isMatch = cp.pattern.matcher(normalized).matches()
                 val elapsed = System.currentTimeMillis() - startTime
-                if (elapsed > 50) continue
                 if (isMatch) return cp
+                if (elapsed > 50) continue
             } catch (e: Exception) {
                 continue
             }

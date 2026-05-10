@@ -1,11 +1,8 @@
 package com.smartcall.guard.ui.screen
 
-import android.content.ContentResolver
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.smartcall.guard.data.entity.LocationRule
 import com.smartcall.guard.data.entity.SettingsEntity
-import com.smartcall.guard.data.repository.RuleRepository
 import com.smartcall.guard.data.repository.SettingsRepository
 import com.smartcall.guard.domain.usecase.ImportContactsUseCase
 import com.smartcall.guard.domain.usecase.ImportResult

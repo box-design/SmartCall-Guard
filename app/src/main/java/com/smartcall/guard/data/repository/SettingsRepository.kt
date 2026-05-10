@@ -1,6 +1,7 @@
 package com.smartcall.guard.data.repository
 
 import com.smartcall.guard.data.dao.SettingsDao
+import com.smartcall.guard.data.entity.BlockMode
 import com.smartcall.guard.data.entity.SettingsEntity
 import com.smartcall.guard.data.entity.LocationRule
 import kotlinx.coroutines.flow.Flow
@@ -23,6 +24,12 @@ class SettingsRepository @Inject constructor(
         whitelistContacts = true,
         whitelistRecentOutgoing = false,
         maxRadiusKm = 50,
-        cacheLocationMinutes = 30
+        cacheLocationMinutes = 30,
+        nightModeEnabled = false,
+        nightModeStart = "22:00",
+        nightModeEnd = "07:00",
+        repeatCallPassEnabled = false,
+        repeatCallPassMinutes = 3,
+        blockMode = BlockMode.NORMAL
     )
 }

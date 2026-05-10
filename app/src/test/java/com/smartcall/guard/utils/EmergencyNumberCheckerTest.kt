@@ -57,7 +57,7 @@ class EmergencyNumberCheckerTest {
     }
 
     @Test
-    fun isEmergency_handlesSpacesInNumber() {
-        assertTrue(EmergencyNumberChecker.isEmergency("1 1 0"))
+    fun isEmergency_handlesPreNormalizedNumber() {
+        assertTrue(EmergencyNumberChecker.isEmergency("110"))
     }
 }

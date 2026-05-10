@@ -54,31 +54,40 @@ class RulesViewModel @Inject constructor(
     private fun updateFilteredRules() {
         val filtered = _rules.value.filter { rule ->
             val typeMatch = _selectedFilter.value?.let { filterType ->
-                when (filterType) {
-                    RuleType.BLACKLIST_EXACT -> rule.type in listOf(RuleType.BLACKLIST_EXACT, RuleType.BLACKLIST_PREFIX, RuleType.BLACKLIST_REGEX)
-                    else -> rule.type == filterType
+                if (filterType.isBlacklist()) {
+                    rule.type.isBlacklist()
+                } else {
+                    rule.type == filterType
                 }
             } ?: true
 
             val queryMatch = _searchQuery.value.isBlank() ||
                     rule.value.contains(_searchQuery.value, ignoreCase = true) ||
-                    (rule.note?.contains(_searchQuery.value, ignoreCase = true) == true)
+                    (rule.note?.contains(_searchQuery.value, ignoreCase = true) == true) ||
+                    (rule.tag?.contains(_searchQuery.value, ignoreCase = true) == true)
 
             typeMatch && queryMatch
         }
         _filteredRules.value = filtered
     }
 
-    fun saveRule(type: RuleType, value: String, note: String?, existingId: String? = null) {
+    fun saveRule(type: RuleType, value: String, note: String?, tag: String? = null, existingId: String? = null) {
         viewModelScope.launch {
-            val rule = existingId?.let { ruleRepository.getRuleByIdSync(it) } ?: RuleEntity(type = type, value = value, note = note)
-            ruleRepository.insertRule(rule.copy(type = type, value = value, note = note))
+            val rule = existingId?.let { ruleRepository.getRuleByIdSync(it) }
+                ?: RuleEntity(type = type, value = value, note = note, tag = tag)
+            ruleRepository.insertRule(rule.copy(type = type, value = value, note = note, tag = tag))
         }
     }
 
     fun deleteRule(id: String) {
         viewModelScope.launch {
             ruleRepository.deleteRule(id)
+        }
+    }
+
+    fun toggleRuleActive(rule: RuleEntity) {
+        viewModelScope.launch {
+            ruleRepository.updateRule(rule.copy(isActive = !rule.isActive))
         }
     }
 }

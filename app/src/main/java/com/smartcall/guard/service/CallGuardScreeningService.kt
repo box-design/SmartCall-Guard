@@ -19,7 +19,11 @@ class CallGuardScreeningService : CallScreeningService() {
     }
 
     override fun onScreenCall(callDetails: Call.Details) {
-        val number = callDetails.handle?.schemeSpecificPart ?: return
+        val number = callDetails.handle?.schemeSpecificPart
+        if (number == null) {
+            respondToCall(callDetails, CallResponse.Builder().setDisallowCall(false).build())
+            return
+        }
         val response = CallResponse.Builder()
 
         val normalized = NumberNormalizer.normalize(number)
@@ -37,7 +41,7 @@ class CallGuardScreeningService : CallScreeningService() {
 
         val result = try {
             evaluateCallUseCase.precompilePatterns()
-            evaluateCallUseCase.executeSync(number)
+            evaluateCallUseCase.executeSync(normalized)
         } catch (e: Exception) {
             respondToCall(callDetails, response.setDisallowCall(false).build())
             return
@@ -57,7 +61,7 @@ class CallGuardScreeningService : CallScreeningService() {
 
         if (result.shouldBlock) {
             evaluateCallUseCase.logBlockedCall(
-                phoneNumber = number,
+                phoneNumber = normalized,
                 reason = result.reason,
                 matchedRule = result.matchedRule,
                 displayLocation = result.displayLocation,

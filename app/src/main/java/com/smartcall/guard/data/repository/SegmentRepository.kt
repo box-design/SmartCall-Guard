@@ -18,10 +18,6 @@ class SegmentRepository @Inject constructor(
 
     fun lookup(number: String): Segment? {
         val normalized = NumberNormalizer.normalize(number)
-        val prefix7 = normalized.take(7)
-        return helper.querySegment(prefix7) ?: run {
-            val prefix3 = normalized.take(3)
-            helper.querySegment(prefix3)
-        }
+        return helper.querySegmentWithRetry(normalized.take(7))
     }
 }

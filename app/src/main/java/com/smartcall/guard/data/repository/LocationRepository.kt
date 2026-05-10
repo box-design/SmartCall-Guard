@@ -4,10 +4,8 @@ import android.content.Context
 import android.location.Geocoder
 import android.location.Location
 import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
-import com.smartcall.guard.data.entity.SettingsEntity
 import com.smartcall.guard.utils.LocationHelper
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -21,40 +19,53 @@ import kotlin.coroutines.resume
 @Singleton
 class LocationRepository @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val fusedLocationClient: FusedLocationProviderClient
 ) {
-    private val fusedLocationClient: FusedLocationProviderClient =
-        LocationServices.getFusedLocationProviderClient(context)
+    @Volatile
+    private var cache: LocationCache = LocationCache()
 
-    private var cachedCity: String? = null
-    private var cachedProvince: String? = null
-    private var cachedLatitude: Double? = null
-    private var cachedLongitude: Double? = null
-    private var cacheTimestamp: Long = 0L
-    private var cachedLocation: Location? = null
+    private val cacheLock = Any()
+
+    private data class LocationCache(
+        val city: String? = null,
+        val province: String? = null,
+        val latitude: Double? = null,
+        val longitude: Double? = null,
+        val timestamp: Long = 0L
+    )
 
     suspend fun getCurrentCity(): String? {
         val settings = settingsRepository.getSettingsSync()
         val cacheMinutes = settings?.cacheLocationMinutes ?: 30
         val cacheExpiryMs = cacheMinutes * 60 * 1000L
 
-        if (cachedCity != null && System.currentTimeMillis() - cacheTimestamp < cacheExpiryMs) {
-            return cachedCity
+        synchronized(cacheLock) {
+            if (cache.city != null && System.currentTimeMillis() - cache.timestamp < cacheExpiryMs) {
+                return cache.city
+            }
         }
 
         val location = getLastLocation() ?: requestNewLocation()
         if (location != null) {
             val city = getCityFromLocation(location)
             if (city != null) {
-                cachedCity = LocationHelper.cleanCityName(city)
-                cachedLatitude = location.latitude
-                cachedLongitude = location.longitude
-                cacheTimestamp = System.currentTimeMillis()
-                return cachedCity
+                val cleanedCity = LocationHelper.cleanCityName(city)
+                synchronized(cacheLock) {
+                    cache = cache.copy(
+                        city = cleanedCity,
+                        latitude = location.latitude,
+                        longitude = location.longitude,
+                        timestamp = System.currentTimeMillis()
+                    )
+                }
+                return cleanedCity
             }
         }
 
-        return cachedCity
+        synchronized(cacheLock) {
+            return cache.city
+        }
     }
 
     suspend fun getCurrentProvince(): String? {
@@ -62,21 +73,30 @@ class LocationRepository @Inject constructor(
         val cacheMinutes = settings?.cacheLocationMinutes ?: 30
         val cacheExpiryMs = cacheMinutes * 60 * 1000L
 
-        if (cachedProvince != null && System.currentTimeMillis() - cacheTimestamp < cacheExpiryMs) {
-            return cachedProvince
+        synchronized(cacheLock) {
+            if (cache.province != null && System.currentTimeMillis() - cache.timestamp < cacheExpiryMs) {
+                return cache.province
+            }
         }
 
         val location = getLastLocation() ?: requestNewLocation()
         if (location != null) {
             val province = getProvinceFromLocation(location)
             if (province != null) {
-                cachedProvince = province.trim().removeSuffix("省")
-                cacheTimestamp = System.currentTimeMillis()
-                return cachedProvince
+                val cleanedProvince = province.trim().removeSuffix("省")
+                synchronized(cacheLock) {
+                    cache = cache.copy(
+                        province = cleanedProvince,
+                        timestamp = System.currentTimeMillis()
+                    )
+                }
+                return cleanedProvince
             }
         }
 
-        return cachedProvince
+        synchronized(cacheLock) {
+            return cache.province
+        }
     }
 
     fun getCurrentCitySync(): String? {
@@ -84,8 +104,10 @@ class LocationRepository @Inject constructor(
         val cacheMinutes = settings?.cacheLocationMinutes ?: 30
         val cacheExpiryMs = cacheMinutes * 60 * 1000L
 
-        if (cachedCity != null && System.currentTimeMillis() - cacheTimestamp < cacheExpiryMs) {
-            return cachedCity
+        synchronized(cacheLock) {
+            if (cache.city != null && System.currentTimeMillis() - cache.timestamp < cacheExpiryMs) {
+                return cache.city
+            }
         }
         return null
     }
@@ -95,15 +117,19 @@ class LocationRepository @Inject constructor(
         val cacheMinutes = settings?.cacheLocationMinutes ?: 30
         val cacheExpiryMs = cacheMinutes * 60 * 1000L
 
-        if (cachedProvince != null && System.currentTimeMillis() - cacheTimestamp < cacheExpiryMs) {
-            return cachedProvince
+        synchronized(cacheLock) {
+            if (cache.province != null && System.currentTimeMillis() - cache.timestamp < cacheExpiryMs) {
+                return cache.province
+            }
         }
         return null
     }
 
     fun getCachedLocation(): CachedLocation? {
-        if (cachedLatitude == null || cachedLongitude == null) return null
-        return CachedLocation(cachedLatitude!!, cachedLongitude!!)
+        synchronized(cacheLock) {
+            if (cache.latitude == null || cache.longitude == null) return null
+            return CachedLocation(cache.latitude!!, cache.longitude!!)
+        }
     }
 
     private suspend fun getLastLocation(): Location? {

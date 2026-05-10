@@ -7,7 +7,6 @@ object EmergencyNumberChecker {
     )
 
     fun isEmergency(number: String): Boolean {
-        val normalized = NumberNormalizer.normalize(number)
-        return emergencyNumbers.contains(normalized)
+        return emergencyNumbers.contains(number)
     }
 }
