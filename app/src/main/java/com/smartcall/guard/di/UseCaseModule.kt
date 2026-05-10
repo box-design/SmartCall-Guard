@@ -21,8 +21,4 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object UseCaseModule {
 
-    @Provides
-    @Singleton
-    fun provideContentResolver(@ApplicationContext context: Context): ContentResolver = context.contentResolver
-
 }
